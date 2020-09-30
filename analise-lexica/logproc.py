@@ -12,7 +12,7 @@ tokens = [
 
 def t_TIMESTAMP(t):
     # Regular expression for TIMESTAMP
-    r'\d+:\d+:\d+.\d+\s-\d+'
+    r'\d{2}:\d{2}:\d{2}.\d{6}\s-\d{4}'
     t.type = 'TIMESTAMP'
     return t
 
