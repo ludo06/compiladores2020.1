@@ -44,6 +44,7 @@ class Grammar:
             for a in self.terminals:
                 self.pred_parsing_tab[t].update({a: []})
             self.pred_parsing_tab[t].update({'$': []})
+
         self.first_trace = []
         self.follow_trace = []
         self.pred_parsing_trace = []
