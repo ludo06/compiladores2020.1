@@ -6,6 +6,7 @@ import pprint
 import pandas as pd
 from tabulate import tabulate
 
+
 # Calculates FIRST, FOLLOW and predictive parsing table
 # as described on pg. 221 - 224 of the Dragon book, 2nd. ed.
 
@@ -41,24 +42,24 @@ class Grammar:
         for t in self.non_terminals:
             self.pred_parsing_tab[t] = {}
             for a in self.terminals:
-                self.pred_parsing_tab[t].update({a : []})
-            self.pred_parsing_tab[t].update({'$' : []})                
+                self.pred_parsing_tab[t].update({a: []})
+            self.pred_parsing_tab[t].update({'$': []})
         self.first_trace = []
         self.follow_trace = []
         self.pred_parsing_trace = []
         self.pp = pprint.PrettyPrinter()
         self.first_computed = False
-    
+
     def getSymbols(self):
         symbols = self.non_terminals.copy()
         for s in self.terminals:
             symbols.append(s)
         return symbols
-    
+
     def print_production(self, s, rhs):
         rhs_as_str = ''.join(rhs)
         print(str(s) + " -> " + rhs_as_str)
-        
+
     def print_productions(self):
         for s in self.production_rules.keys():
             for rhs in self.production_rules[s]:
@@ -68,46 +69,72 @@ class Grammar:
         for s in self.getSymbols():
             self.first(s)
         self.first_computed = True
-            
+
     def firstW(self, w):
         '''
         Calculates FIRST(w), where w is a word represented as a tuple of
-        strings. 
+        strings.
         Precondition: execution of compute_first.
         '''
         # The word w is represented as a tuple of strings.
-        assert(self.first_computed)
+        assert (self.first_computed)
         if w != ():
             first_w = set()
             x_1 = w[0]
             # "Add to FIRST(X_1 X_2 ... X_n) all non-epsilon symbols of
             # FIRST(X_1)."
 
-            ### Do your magic!
+            ## Parte 1 ##
+
+            first_w.update(self.first_tab[x_1])
+
+            if 'epsilon' in first_w:
+                first_w.discard('epsilon')
 
             # Also add the non-epsilon symbols of FIRST(X_2), if epsilon is in
             # FIRST(X_1), and so on until X_n.
 
-            ### Do your magic!
-            
+            ## Parte 2 ##
+
+            tamanhoW = len(w)
+            for i in range(1, tamanhoW):
+
+                x_anterior = w[i - 1]
+                x_atual = w[i]
+
+                if 'epsilon' not in self.first_tab[x_atual] and 'epsilon' in self.first_tab[x_anterior]:
+                    first_w.update(self.first_tab[x_atual])
+
             # Finally, add epsilon to FIRST(X_1 X_2 ... X_n) if for all i
             # epsilon \in FIRST(X_i).
 
-            ### Do your magic!
-            
+            ## Parte 3 ##
+
+            adicionar_ep = True
+
+            for x_atual in w:
+
+                if 'epsilon' not in self.first_tab[x_atual]:
+                    adicionar_ep = False
+                    break
+
+            if adicionar_ep:
+                first_w.add('epsilon')
+
             return first_w
+
         else:
             return set()
-        
+
     def first(self, s):
         '''
         Calculates the set FIRST for a given symbol s.
-        Updates attribute first_tab[s]. 
+        Updates attribute first_tab[s].
         '''
         if s in self.terminals:
             self.first_tab[s].add(s)
         else:
-            assert(s in self.non_terminals)
+            assert (s in self.non_terminals)
             for rhs in self.production_rules[s]:
                 y_1 = rhs[0]
                 # We assume that if the first symbol in the RHS
@@ -121,15 +148,15 @@ class Grammar:
                 # use it.
                 if self.first_tab[y_1] == set():
                     self.first(y_1)
-                # FIRST(y_1) \subseteq FIRST(s)    
+                # FIRST(y_1) \subseteq FIRST(s)
                 for a in self.first_tab[y_1]:
-                    self.first_log(s, a, rhs)                    
+                    self.first_log(s, a, rhs)
                     self.first_tab[s].add(a)
                 # FIRST(y_i) \subseteq FIRST(s), iff
                 # epsilon \in FISRT(y_j), for every 1 <= j <= i.
                 # We assume y_i may not be epsilon, unless i = 1.
                 for i in range(1, len(rhs)):
-                    y_ant = rhs[i - 1] # ant =  i - 1
+                    y_ant = rhs[i - 1]  # ant =  i - 1
                     y_i = rhs[i]
                     # We must first calculate FIRST(y_ant) before
                     # use it.
@@ -140,16 +167,23 @@ class Grammar:
                     # However, we only reach j if every k 1 <= k < j
                     # has been reached before.
 
-                    ### Do your magic!
+                    ## Parte 4 ##
 
-                    
+                    if 'epsilon' in self.first_tab[y_ant]:
+
+                        if self.first_tab[y_i] == set():
+                            self.first(y_i)
+
+                        for x in self.first_tab[y_i]:
+                            self.first_tab[s].add(x)
+
             # If all symbols in the rhs derive epsilon, than epsilon
             # must be included in FIRST(s).
             add_epsilon = True
             for rhs in self.production_rules[s]:
                 for a in rhs:
                     if not a == "epsilon":
-                        if not("epsilon" in self.first_tab[a]):
+                        if not ("epsilon" in self.first_tab[a]):
                             add_epsilon = False
             if add_epsilon:
                 self.first_tab[s].add("epsilon")
@@ -163,15 +197,15 @@ class Grammar:
         '''
         if not first in self.first_tab[symb]:
             self.first_trace.append("Added " + str(first) + " to FIRST(" + str(symb) + ") " + \
-                                    "while processing rule " + str(symb) + " -> " +  ''.join(rhs))
-            
+                                    "while processing rule " + str(symb) + " -> " + ''.join(rhs))
+
     def print_first_log(self):
         for m in self.first_trace:
             print(m)
-            
+
     def print_follow(self):
         self.pp.pprint(self.follow_tab)
-        
+
     def tab_size(self, t):
         size = 0
         for r in list(t.values()):
@@ -187,12 +221,12 @@ class Grammar:
         '''
         if not follow.issubset(self.follow_tab[symb]):
             self.follow_trace.append("Added " + str(follow) + " to FOLLOW(" + str(symb) + ") " + \
-                                     "while processing rule " + str(symb) + " -> " +  ''.join(rhs))
+                                     "while processing rule " + str(symb) + " -> " + ''.join(rhs))
 
     def print_follow_log(self):
         for m in self.follow_trace:
             print(m)
-            
+
     def compute_follow(self):
         '''
         Calculates FOLLOW table.
@@ -203,16 +237,23 @@ class Grammar:
         # To compute FOLLOW(A), for all non terminals A,
         # apply the following rules until nothing can be
         # added to any FOLLOW set.
+
         while True:
-            ### Do your magic!
+
+            ## Parte 5  ##
+
+            for simbolo in self.non_terminals:
+                self.follow(simbolo)
+
+            break
+
             pass
 
-            
     def follow(self, s):
         '''
         Computes the FOLLOW of a given non terminal symbol.
         '''
-        assert(s in self.non_terminals)
+        assert (s in self.non_terminals)
         for rhs in self.production_rules[s]:
             for i in range(len(rhs)):
                 B = rhs[i]
@@ -221,20 +262,39 @@ class Grammar:
                     if beta != ():
                         # If there is a production A -> alpha􏰐B beta then everything in
                         # FIRST(beta),􏰚except epsilon, is in FOLLOW(B).
-                        
-                        ### Do your magic!
+
+                        ## Parte 6 ##
+
+                        primeiro_beta = self.firstW(beta)
+                        self.follow_tab[B].update(primeiro_beta)
+                        self.follow_tab[B].discard('epsilon')
+
 
                         # If there is a production A -> alpha B beta
                         # where FIRST(beta) contains epsilon, then FOLLOW(A) \subset FOLLOW(B) 􏰛􏰂
 
-                        ### Do your magic! 
+                        ## Parte 7 ##
+
+                        if 'epsilon' in primeiro_beta:
+                            if self.follow_tab[B] == set():
+                                self.follow(B)
+
+                            self.follow_tab[s].update(self.follow_tab[B])
+
                         pass
                     else:
                         # If there is a production A -> alpha B
                         # then FOLLOW(A) \subset FOLLOW(B) 􏰛􏰂
 
-                        ### Do your magic!
+                        ## Parte 8 ##
+
+                        if self.follow_tab[B] == set():
+                            self.follow(B)
+
+                        self.follow_tab[s].update(self.follow_tab[B])
+
                         pass
+
     def compute_pred_parsing_tab(self):
         '''
         Computes the predictive parsing table of a given grammar.
@@ -247,27 +307,34 @@ class Grammar:
                 # b in FOLLOW(A) add A -> alpha to M[A, b]. Also, if $
                 # is in FOLLOW(A), add A -> alpha to M[A, $] as well.
                 if alpha == ("epsilon",) or \
-                   (alpha != ("epsilon",) and ("epsilon" in self.firstW(alpha))):
+                        (alpha != ("epsilon",) and ("epsilon" in self.firstW(alpha))):
 
-                    ### Do your magic!
+                    ## Parte 9 ##
+
+                    for b in self.follow_tab[A]:
+                        self.pred_parsing_tab[A][b].append(A + " -> " + "".join(alpha))
 
                 else:
-                    # For each terminal a in FIRST(alpha), 
+                    # For each terminal a in FIRST(alpha),
                     # add A -> alpha to M[A, a]
 
-                    ### Do your magic!
-                    
+                    ## Parte 10 ##
+
+                    for a in self.firstW(alpha):
+                        self.pred_parsing_tab[A][a].append(A + " -> " + "".join(alpha))
+
     def print_pred_parsing_tab(self):
         # self.pp.pprint(self.pred_parsing_tab)
         df = pd.DataFrame(self.pred_parsing_tab).T
         df.fillna(0, inplace=True)
         print(tabulate(df, headers='keys', tablefmt='psql'))
 
+
 class Exercise:
     def __init__(self, s, g):
         self.statement = s
         self.grammar = g
-        
+
     def solve(self):
         print("\n|- " + str(self.statement))
         print("Production rules")
@@ -275,38 +342,38 @@ class Exercise:
         print("\nFIRST table")
         self.grammar.compute_first()
         self.grammar.print_first()
-        print("\nFIRST log")    
+        print("\nFIRST log")
         self.grammar.print_first_log()
         print("\nFOLLOW table")
         self.grammar.compute_follow()
         self.grammar.print_follow()
-        print("\nFOLLOW log")    
+        print("\nFOLLOW log")
         self.grammar.print_follow_log()
         print("\nPredictive parsing table")
         self.grammar.compute_pred_parsing_tab()
         self.grammar.print_pred_parsing_tab()
-        
+
+
 if __name__ == '__main__':
     # Production rules for grammar 4.28
-    p = {"E" : [("T", "E'")],
-         "E'" : [("+", "T", "E'"), ("epsilon",)],
-         "T" : [("F", "T'")],
-         "T'" : [("*", "F", "T'"), ("epsilon",)],
-         "F" : [("(", "E", ")"), ("id",)]}
+    p = {"E": [("T", "E'")],
+         "E'": [("+", "T", "E'"), ("epsilon",)],
+         "T": [("F", "T'")],
+         "T'": [("*", "F", "T'"), ("epsilon",)],
+         "F": [("(", "E", ")"), ("id",)]}
     # Grammar 4.28
     g = Grammar("E", p, ["E", "E'", "T", "T'", "F"],
                 ["+", "*", "(", ")", "id"])
 
     ex = Exercise("Example 4.30 of the Dragon book, 2nd.", g)
     ex.solve()
-    
+
     # Production rules for Example 4.33
-    p = {"S" : [("i", "E", "t", "S", "S'"), ("a", )],
-         "S'" : [("e", "S"), ("epsilon",)],
-         "E" : [("b",)]}
+    p = {"S": [("i", "E", "t", "S", "S'"), ("a",)],
+         "S'": [("e", "S"), ("epsilon",)],
+         "E": [("b",)]}
     g = Grammar("S", p, ["S", "S'", "E"],
                 ["a", "b", "e", "i", "t"])
 
     ex = Exercise("Example 4.33 of the Dragon book, 2nd.", g)
     ex.solve()
-    
