@@ -1,0 +1,41 @@
+Gramática - alterações no imp2.ebnf :
+
+Adicionado novas expressões referentes a lista.
+
+lista_inteiros -> expressões entre []'s separados por virgulas
+
+lista_indice -> identificador de uma lista com enésimo elemento em []'s
+
+lista_append -> lista de inteiros ou único elemento em conjunto junto ao operador "++" para junção
+
+associa_lista = lista_indice junto ao operador := para associar a um elemento.
+
+tamanho_lista = caracter atribuido $ 
+
+Adicionado novo operador para operação de concatenação "conc".
+
+Adicionado comando atomico "associa_lista" para associação.
+
+
+
+
+Pi denotações - Alterações no impiler.py:
+
+Adicionado novo simbolo de operador "conc" para concatenação.
+
+Adicionado funções para as reprentações de lista_inteiros, lista_indice, lista_append, associa_lista e tamanho_lista.
+
+
+
+
+Adição das equações ao pi framework - Alteraçoes em pi.py:
+
+Declaração da lista de inteiros.
+
+Definição das expressões de tamanhoLista, appendLista, concatenarLista, indiceLista.
+
+Adicionado tokens #SIZE, #IND, #APPEND, #CONC e #ASSOCLISTA.
+
+Criação das funções eval para tratamento da pilha de valores definido de acordo com as implementações anteriores.
+
+Criação do comando de associação de lista.
