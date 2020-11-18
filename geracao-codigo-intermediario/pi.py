@@ -304,6 +304,56 @@ class Not(BoolExp):
         else:
             raise IllFormed(self, e)
 
+class listaInteiros(Statement):
+
+    def __init__(self, lista):
+        if isinstance(lista, list):
+            Statement.__init__(self, lista)
+        else:
+            raise IllFormed(self, lista)
+
+class indiceLista(Exp):
+
+    def __init__(self,idn, e):
+        if isinstance(idn, Id):
+            if isinstance(e, Exp):
+                Exp.__init__(self, idn, e)
+            else:
+                raise IllFormed(self, e)
+        else:
+            raise IllFormed(self, idn)
+
+class tamanhoLista(Exp):
+
+    def __init(self, idn):
+        if isinstance(idn, Id):
+            Exp.__init__(self, idn)
+        else:
+            raise IllFormed(self, idn)
+
+
+class appendLista(Exp):
+
+    def __init__(self, lista1, lista2):
+        if isinstance(lista1, Exp) or isinstance(lista1, listaInteiros):
+            if isinstance(lista2, Exp) or isinstance(lista2, listaInteiros):
+                Exp.__init__(self, lista1, lista2)
+            else:
+                raise IllFormed(self, lista2)
+        else:
+            raise IllFormed(self, lista2)
+
+class concatenarLista(Exp):
+
+    def __init__(self, lista, e):
+        if isinstance(lista, Exp) or isinstance(lista, listaInteiros):
+            if isinstance(e, Exp):
+                Exp.__init__(self, lista, e)
+            else:
+                raise IllFormed(self, e)
+        else:
+            raise IllFormed(self, lista)
+
 class ExpKW():
     SUM = "#SUM"
     SUB = "#SUB"
@@ -317,8 +367,86 @@ class ExpKW():
     AND = "#AND"
     OR = "#OR"
     NOT = "#NOT"
+    SIZE = "#SIZE"
+    IND = "#IND"
+    APPEND = "#APPEND"
+    CONC = "#CONC"
+    ASSOCLISTA = "#ASSOCLISTA"
 
 class ExpPiAut(PiAutomaton):
+
+    def __evallistaInteiros(self, e):
+        val = e.operand(0)
+        self.pushVal(val)
+
+    def __evalappendLista(self, e):
+        lista1 = e.operand(0)
+        lista2 = e.operand(1)
+        self.pushCnt(ExpKW.APPEND)
+        self.pushCnt(lista1)
+        self.pushCnt(lista2)
+
+    def __evalappendListaKW(self):
+        lista1 = self.popVal()
+        lista2 = self.popVal()
+        self.pushVal(lista1 + lista2)
+
+    def __evalconcatenarLista(self, e):
+        lista1 = e.operand(0)
+        lista2 = e.operand(1)
+        self.pushCnt(ExpKW.CONC)
+        self.pushCnt(lista1)
+        self.pushCnt(lista2)
+
+    def __evalconcatenarListaKW(self):
+        lista = self.popVal()
+        novo = self.popVal()
+        novaLista = lista[:]
+        novaLista.append(novo)
+        self.pushVal(novaLista)
+
+    def __evalindiceLista(self, e):
+        idn = e.operand(0)
+        idx = e.operand(1)
+        self.pushCnt(ExpKW.IND)
+        self.pushCnt(idn)
+        self.pushCnt(idx)
+
+    def __evalindiceListaKW(self):
+        lista = self.popVal()
+        indX = self.popVal()
+        self.pushVal(lista[indX])
+
+    def __evaltamanhoLista(self, e):
+        lista = e.operand(0)
+        self.pushCnt(ExpKW.SIZE)
+        self.pushCnt(lista)
+
+    def __evaltamanhoListaKW(self):
+        lista = self.popVal()
+        self.pushVal(len(lista))
+
+    def __evalassociaLista(self, c):
+        idn = c.operand(0)
+        idx = c.operand(1)
+        e = c.operand(2)
+        self.pushVal(idn.id())
+        self.pushVal(idx)
+        self.pushCnt(ExpKW.ASSOCLISTA)
+        self.pushCnt(e)
+
+    def __evalassociaListaKW(self):
+        val = self.popVal()
+        idx = self.popVal()
+        idn = self.popVal()
+        lista = self.getBindable(idn)
+        s = self.sto()
+        if isinstance(idx, Id):
+            aux = self.getBindable(idx.id())
+            idx = s[aux]
+        novalista = s[lista]
+        novalista[idx] = val
+        self.updateStore(lista, novalista)
 
     def __evalSum(self, e):
         e1 = e.left_operand()
@@ -589,6 +717,29 @@ class ExpPiAut(PiAutomaton):
             self.__evalNot(e)
         elif e == ExpKW.NOT:
             self.__evalNotKW()
+        elif isinstance(e, listaInteiros):
+            self.__evallistaInteiros(e)
+        elif isinstance(e, indiceLista):
+            self.__evalindiceLista(e)
+        elif isinstance(e, appendLista):
+            self.__evalappendLista(e)
+        elif isinstance(e, concatenarLista):
+            self.__evalconcatenarLista(e)
+        elif isinstance(e, associaLista):
+            self.__evalassociaLista(e)
+        elif isinstance(e, tamanhoLista):
+            self.__evaltamanhoLista(e)
+        elif e == ExpKW.SIZE:
+            self.__evaltamanhoListaKW()
+        elif e == ExpKW.ASSOCLISTA:
+            self.__evalassociaListaKW()
+        elif e == ExpKW.CONC:
+            self.__evalconcatenarListaKW()
+        elif e == ExpKW.APPEND:
+            self.__evalappendListaKW()
+        elif e == ExpKW.IND:
+            self.__evalindiceListaKW()
+
         else:
             raise EvaluationError( \
                 "Don't know how to evaluate " + str(e) + " of type " + str(type(e)) + "." + \
@@ -603,6 +754,19 @@ class Cmd(Statement):
 
 class Nop(Cmd):
     pass
+
+class associaLista(Cmd):
+    def __init__(self, idn, idx, e):
+        if isinstance(idn, Id):
+            if isinstance(idx, Exp):
+                if isinstance(e, Exp):
+                    Cmd.__init__(self, idn, idx, e)
+                else:
+                    raise IllFormed(self, e)
+            else:
+                raise IllFormed(self, idx)
+        else:
+            raise IllFormed(self, idn)
 
 class Id(ArithExp, BoolExp):
     def __init__(self, s):
@@ -625,6 +789,7 @@ class Print(Cmd):
 
     def exp(self):
         return self.operand(0)
+
 
 class Assign(Cmd):
 
@@ -885,7 +1050,7 @@ class Bind(Dec):
                 i = args[0]
                 e = args[1]
                 if isinstance(i, Id):
-                    if isinstance(e, Exp):
+                    if isinstance(e, Exp) or isinstance(e, listaInteiros):
                         Dec.__init__(self, i, e)
                     else:
                         raise IllFormed(self, e)
@@ -903,7 +1068,7 @@ class Bind(Dec):
 
 class Ref(Exp):
     def __init__(self, e):
-        if isinstance(e, Exp):
+        if isinstance(e, Exp) or isinstance(e, listaInteiros):
             Exp.__init__(self, e)
         else:
             raise IllFormed(self, e)

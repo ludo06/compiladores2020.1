@@ -26,11 +26,21 @@
 
 start = [ds:decSeq] [cs:cmd_seq] $ ;
 
-exp = paren_exp | bin_exp | un_exp | @:atom ;
+exp = tamanho_lista | lista_indice | lista_append | paren_exp | bin_exp | un_exp | lista_inteiros | @:atom ;
+
+lista_indice = idn:identifier"["e:exp"]" ;
+
+lista_append = lista1:lista_inteiros "++" lista2:lista_inteiros | lista1:lista_inteiros "++" lista2:exp | lista1:exp "++" lista2:lista_inteiros | lista1:exp "++" lista2:exp ;
+
+lista_inteiros = "[" e:exp {','e:exp}* "]" ;
+
+associa_lista = idn:identifier"["idx:exp"]" op:":=" e:exp ;
+
+tamanho_lista = "$" idn:identifier ;
 
 paren_exp = "(" e:exp ")" ;
 
-bin_exp = e1:exp op:binop e2:exp ;
+bin_exp = lista:lista_inteiros op:binop e:exp | e1:exp op:binop e2:exp ;
 
 un_exp = op:"not" e:exp ;
 
@@ -42,7 +52,7 @@ truth_atom = truth ;
 
 id_atom = identifier ;
 
-binop = "and"| "or" | "==" | "<=" | ">=" | "<" | ">"  | "+" | "-" | "*" | "/"  ; 
+binop = "conc" | "and"| "or" | "==" | "<=" | ">=" | "<" | ">"  | "+" | "-" | "*" | "/" ;
 
 truth = 'True' | 'False' ;
 
@@ -56,7 +66,7 @@ blk = "{" ds:decSeq cs:cmd_seq "}" ;
 
 cmd_seq = ";"%{ac:atom_cmd}+ ;
 
-atom_cmd = cond | loop | assign | print | call | skip ;
+atom_cmd = associa_lista | cond | loop | assign | print | call | skip ;
 
 skip = "skip" ;
 

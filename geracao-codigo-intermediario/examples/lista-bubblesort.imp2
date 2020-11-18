@@ -1,0 +1,26 @@
+var lista = [1,5,200,100,150];
+var cont1 = 0;
+var cont2 = 0;
+var n1 = 0;
+var n2 = 0;
+var tamLista = $lista;
+
+
+tamLista := tamLista - 1;
+
+while (tamLista > 0){
+	while (cont1 < tamLista){
+	    cont2 := cont1 + 1;
+	    n1 := lista[cont1];
+		n2 := lista[cont2];
+        if (n1 > n2){
+            lista[cont1] := n2;
+			lista[cont2] := n1
+		};
+		cont1 := cont1 + 1
+	};
+	cont1 := 0;
+	tamLista := tamLista - 1
+};
+
+print(lista)

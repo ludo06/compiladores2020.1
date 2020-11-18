@@ -17,6 +17,23 @@ class Impiler(object):
     def un_exp(self, ast):
         if ast.op == "not":
             return pi.Not(ast.e)
+
+    def lista_inteiros(self, ast):
+        if isinstance(ast.e, list):
+            return pi.listaInteiros(ast.e)
+        return pi.listaInteiros([ast.e])
+
+    def lista_indice(self, ast):
+        return pi.indiceLista(ast.idn, ast.e)
+
+    def associa_lista(self, ast):
+        return pi.associaLista(ast.idn, ast.idx, ast.e)
+
+    def lista_append(self, ast):
+        return pi.appendLista(ast.lista1, ast.lista2)
+
+    def tamanho_lista(self,ast):
+        return pi.tamanhoLista(ast.idn)
         
     def bin_exp(self, ast):
         if ast.op == "+":
@@ -40,7 +57,9 @@ class Impiler(object):
         elif ast.op == ">=":
             return pi.Ge(ast.e1, ast.e2)        
         elif ast.op == "==":
-            return pi.Eq(ast.e1, ast.e2)        
+            return pi.Eq(ast.e1, ast.e2)
+        elif ast.op == "conc":
+            return pi.concatenarLista(ast.e1, ast.e2)
     
     def truth(self, ast):
         return pi.Boo(bool(ast))
