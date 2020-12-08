@@ -1,0 +1,17 @@
+var resultado = 0 ;
+var fat = 1 ;
+var cont = 1 ;
+
+def fatorial (n) {
+
+    while (cont < n){
+        cont := cont + 1 ;
+        fat := fat * cont
+    } ;
+
+    return fat
+}
+
+resultado := fatorial(10) ;
+
+print(resultado)

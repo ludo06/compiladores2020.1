@@ -23,10 +23,11 @@
 @@keyword :: 'skip'
 @@keyword :: '{' '}'
 @@keyword :: 'print'
+@@keyword :: 'return'
 
 start = [ds:decSeq] [cs:cmd_seq] $ ;
 
-exp = tamanho_lista | lista_indice | lista_append | paren_exp | bin_exp | un_exp | lista_inteiros | @:atom ;
+exp = call | tamanho_lista | lista_indice | lista_append | paren_exp | bin_exp | un_exp | lista_inteiros | @:atom ;
 
 lista_indice = idn:identifier"["e:exp"]" ;
 
@@ -37,6 +38,8 @@ lista_inteiros = "[" e:exp {','e:exp}* "]" ;
 associa_lista = idn:identifier"["idx:exp"]" op:":=" e:exp ;
 
 tamanho_lista = "$" idn:identifier ;
+
+comando_return = op:"return" e:exp;
 
 paren_exp = "(" e:exp ")" ;
 
@@ -66,7 +69,7 @@ blk = "{" ds:decSeq cs:cmd_seq "}" ;
 
 cmd_seq = ";"%{ac:atom_cmd}+ ;
 
-atom_cmd = associa_lista | cond | loop | assign | print | call | skip ;
+atom_cmd = associa_lista | cond | loop | assign | print | call | skip | comando_return ;
 
 skip = "skip" ;
 

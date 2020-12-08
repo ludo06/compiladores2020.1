@@ -1,0 +1,12 @@
+var n = 0;
+var x = 0;
+var resultado = 0;
+
+def soma5 (n) {
+    x := n + 5;
+    return x
+}
+
+resultado := soma5(5);
+
+print(resultado)

@@ -791,11 +791,20 @@ class Print(Cmd):
         return self.operand(0)
 
 
+
+class Return (Cmd):
+    def __init__(self, e):
+        if isinstance(e, Exp) or isinstance(e, listaInteiros):
+            Cmd.__init__(self, e)
+        else:
+            raise IllFormed(self, e)
+
+
 class Assign(Cmd):
 
     def __init__(self, i, e):
         if isinstance(i, Id):
-            if isinstance(e, Exp):
+            if isinstance(e, Exp) or isinstance(e, listaInteiros) or isinstance(e, Call):
                 Cmd.__init__(self, i, e)
             else:
                 raise IllFormed(self, e)
@@ -881,7 +890,8 @@ class CmdKW:
     ASSIGN = "#ASSIGN"
     LOOP   = "#LOOP"
     COND   = "#COND"
-    PRINT  = "#PRINT" 
+    PRINT  = "#PRINT"
+    RETURN = "#RETURN"
 
 class CmdPiAut(ExpPiAut):
 
@@ -1004,6 +1014,31 @@ class CmdPiAut(ExpPiAut):
         self.pushCnt(c2)
         self.pushCnt(c1)
 
+    def __evalReturn(self, p):
+
+       val = p.operand(0)
+       self.pushCnt(CmdKW.RETURN)
+       self.pushCnt(val)
+
+    def __evalReturnKW(self):
+
+        val = self.popVal()
+        move = self.popVal()
+        while isinstance(move, dict) or isinstance(move, list):
+            move = self.popVal()
+
+        env = self.popVal()
+        self['val'] = [[],[],{}]
+        self.pushVal(env)
+        self.pushVal(move)
+        self.pushVal(val)
+
+        controle = self.popCnt()
+
+        while controle == "#BLKCMD":
+            controle = self.popCnt()
+
+        self.pushCnt(controle)
 
     def eval(self):
         c = self.popCnt()
@@ -1029,6 +1064,10 @@ class CmdPiAut(ExpPiAut):
             self.__evalLoopKW()
         elif isinstance(c, CSeq):
             self.__evalCSeq(c)
+        elif isinstance(c, Return):
+            self.__evalReturn(c)
+        elif c == CmdKW.RETURN:
+            self.__evalReturnKW()
         else:
             self.pushCnt(c)
             super().eval()
@@ -1226,7 +1265,7 @@ class DecPiAut(CmdPiAut):
             self.pushCnt(DecCmdKW.BLKCMD)
             self.pushCnt(c)
 
-    def __evalBlkDecKW(self):
+    def __evalBlkDecKW(self, dec):
         d = self.popVal()
         c = self.popVal()
         en = self.env()
@@ -1269,7 +1308,7 @@ class DecPiAut(CmdPiAut):
         elif isinstance(d, Blk):
             self.__evalBlk(d)
         elif d == DecCmdKW.BLKDEC:
-            self.__evalBlkDecKW()
+            self.__evalBlkDecKW(d)
         elif d == DecCmdKW.BLKCMD:
             self.__evalBlkCmdKW()
         else:

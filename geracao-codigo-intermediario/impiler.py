@@ -34,6 +34,7 @@ class Impiler(object):
 
     def tamanho_lista(self,ast):
         return pi.tamanhoLista(ast.idn)
+
         
     def bin_exp(self, ast):
         if ast.op == "+":
@@ -170,3 +171,6 @@ class Impiler(object):
     def call(self, ast):
         actuals = [e for e in ast.a if e != ',']
         return pi.Call(ast.idn, actuals)
+
+    def comando_return(self, ast):
+        return pi.Return(ast.e)
